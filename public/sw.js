@@ -1,7 +1,7 @@
 // sw.js — permite instalar la web como app (PWA) y abrirla aunque falle la conexión.
-const SHELL_CACHE = 'surtidor-shell-v1';
+const SHELL_CACHE = 'surtidor-shell-v2';
 const DATA_CACHE = 'surtidor-data';
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'core.js', 'config.js', 'icon.svg', 'manifest.webmanifest'];
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'core.js', 'config.js', 'icon.svg', 'manifest.webmanifest', 'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL_CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -35,7 +35,7 @@ self.addEventListener('fetch', (e) => {
   }
 
   // App y librería del mapa: respuesta inmediata desde caché y actualización en segundo plano.
-  if (url.origin === location.origin || url.hostname === 'unpkg.com') {
+  if (url.origin === location.origin) {
     e.respondWith(
       caches.open(SHELL_CACHE).then(async (cache) => {
         const cached = await cache.match(req);

@@ -31,6 +31,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Copiar la librería del mapa (Leaflet)
+        run: node scripts/vendor.mjs
+
       - name: Descargar precios y generar teselas
         run: node scripts/build-data.mjs public/data
         env:

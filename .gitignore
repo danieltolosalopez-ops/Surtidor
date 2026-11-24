@@ -7,3 +7,4 @@ test/screens/
 android/
 ios/
 .DS_Store
+public/vendor/

@@ -23,7 +23,9 @@ surtidor/
 ├── scripts/
 │   ├── build-data.mjs        ← descarga y prepara los datos
 │   ├── make-icons.mjs        ← genera iconos e imágenes para las tiendas
+│   ├── vendor.mjs            ← copia la librería del mapa (Leaflet) en public/vendor
 │   └── providers/
+│       ├── _time.mjs         ← conversión de horas locales
 │       ├── es.mjs            ← España (Ministerio)
 │       └── fr.mjs            ← Francia (Ministère de l'Économie)
 ├── public/                   ← la app (esto es lo que ve el usuario)
@@ -34,7 +36,7 @@ surtidor/
 └── test/                     ← pruebas (opcional)
 ```
 
-La carpeta `public/data/` **no se sube**: la crea GitHub automáticamente con los precios.
+Las carpetas `public/data/` y `public/vendor/` **no se suben**: las crea GitHub automáticamente en cada publicación.
 
 ---
 
@@ -104,7 +106,7 @@ y dentro de `<application>` (con TU id de aplicación de AdMob, el que lleva `~`
 ```
 Después:
 ```bash
-npx cap sync
+npm run cap:sync      # copia la librería del mapa y prepara el proyecto Android
 npx cap open android
 ```
 En Android Studio: *File → New → Image Asset* con `store/icon-1024.png` para los iconos, y *Build → Generate Signed App Bundle* para crear el `.aab`.
@@ -123,7 +125,7 @@ En Android Studio: *File → New → Image Asset* con `store/icon-1024.png` para
 Requisitos: **99 $/año** (Apple Developer Program) y un **Mac con Xcode** (o un servicio de Mac en la nube).
 ```bash
 npx cap add ios
-npx cap sync
+npm run cap:sync
 npx cap open ios
 ```
 En `ios/App/App/Info.plist` añade:
@@ -166,7 +168,7 @@ Fuentes oficiales candidatas (revisa sus condiciones de uso antes): Italia (MIMI
 ```bash
 npm test                      # pruebas de cálculo y del generador con datos simulados
 npm run data                  # descarga los precios reales a public/data
-npx serve public              # abre http://localhost:3000
+npm run serve                 # copia la librería del mapa y abre http://localhost:5173
 ```
 
 ---

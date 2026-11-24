@@ -2,6 +2,7 @@
 // Datos abiertos (Licence Ouverte / Etalab), actualizados cada ~10 minutos.
 
 import { normKey, parseCoord, parsePrice, validLatLon, titleCase } from '../../public/core.js';
+import { localToISO } from './_time.mjs';
 
 export const meta = {
   code: 'FR',
@@ -88,7 +89,11 @@ export function parse(text) {
   return stations;
 }
 
+/** Fechas francesas: con zona horaria se respetan; sin ella se interpretan como hora de París. */
 function toISO(value) {
-  const t = value ? Date.parse(value) : NaN;
+  const str = String(value || '').trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(str);
+  if (m) return localToISO(m[1], m[2], m[3], m[4], m[5], m[6] || 0, 'Europe/Paris');
+  const t = str ? Date.parse(str) : NaN;
   return new Date(Number.isFinite(t) ? t : Date.now()).toISOString();
 }

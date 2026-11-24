@@ -2,6 +2,7 @@
 // Datos abiertos y gratuitos, reutilizables citando la fuente. Se actualizan cada ~30 minutos.
 
 import { normKey, parseCoord, parsePrice, validLatLon, titleCase } from '../../public/core.js';
+import { localToISO } from './_time.mjs';
 
 export const meta = {
   code: 'ES',
@@ -116,17 +117,6 @@ function firstStartingWith(obj, prefix) {
 export function madridToISO(fecha) {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(String(fecha || '').trim());
   if (!m) return null;
-  const [, d, mo, y, h, mi, s = '0'] = m.map((x) => x);
-  const asUTC = Date.UTC(+y, +mo - 1, +d, +h, +mi, +s);
-  const offset = tzOffsetMinutes(new Date(asUTC), 'Europe/Madrid');
-  return new Date(asUTC - offset * 60000).toISOString();
-}
-
-function tzOffsetMinutes(date, timeZone) {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      .formatToParts(date).filter((p) => p.type !== 'literal').map((p) => [p.type, +p.value]),
-  );
-  const local = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
-  return Math.round((local - date.getTime()) / 60000);
+  const [, d, mo, y, h, mi, s = '0'] = m;
+  return localToISO(y, mo, d, h, mi, s, 'Europe/Madrid');
 }

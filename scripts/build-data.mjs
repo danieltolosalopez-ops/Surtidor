@@ -96,12 +96,13 @@ async function writeCountry(meta, tiles, common = null, extra = {}) {
   const dir = path.join(OUT, meta.code);
   await mkdir(dir, { recursive: true });
   const summary = {};
-  let count = 0, latest = common;
+  const notAfter = new Date(Date.now() + 10 * 60000).toISOString(); // ignora fechas futuras erróneas
+  let count = 0, latest = common && common <= notAfter ? common : null;
   for (const [key, list] of tiles) {
     await writeFile(path.join(dir, `${key}.json`), JSON.stringify({ country: meta.code, tile: key, stations: list }));
     summary[key] = summarize(list);
     count += list.length;
-    for (const s of list) if (s.u && (!latest || s.u > latest)) latest = s.u;
+    for (const s of list) if (s.u && s.u <= notAfter && (!latest || s.u > latest)) latest = s.u;
   }
   return {
     code: meta.code, name: meta.name, currency: meta.currency,
