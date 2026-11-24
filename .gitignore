@@ -1,10 +1,10 @@
-node_modules/
-public/data/
-test/out/
-test/fixtures/
-test/site/
-test/screens/
+.DS_Store
 android/
 ios/
-.DS_Store
+node_modules/
+public/data/
 public/vendor/
+test/fixtures/
+test/out/
+test/screens/
+test/site/
