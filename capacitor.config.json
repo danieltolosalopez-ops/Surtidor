@@ -1,0 +1,11 @@
+{
+  "appId": "com.tunombre.surtidor",
+  "appName": "Surtidor",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "AdMob": {}
+  }
+}

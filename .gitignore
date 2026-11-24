@@ -1,0 +1,9 @@
+node_modules/
+public/data/
+test/out/
+test/fixtures/
+test/site/
+test/screens/
+android/
+ios/
+.DS_Store

@@ -1,0 +1,30 @@
+{
+  "name": "surtidor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mapa de gasolineras con precios oficiales en tiempo real (España y Francia, ampliable).",
+  "type": "module",
+  "scripts": {
+    "data": "node scripts/build-data.mjs public/data",
+    "test": "node test/make-fixtures.mjs && node test/core.test.mjs && FIXTURES_DIR=test/fixtures node scripts/build-data.mjs test/out",
+    "serve": "npx --yes serve public -l 5173",
+    "icons": "node scripts/make-icons.mjs",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "sharp": "^0.34.0"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^7.0.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/geolocation": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  }
+}

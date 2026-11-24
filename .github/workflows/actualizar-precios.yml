@@ -1,0 +1,54 @@
+# Cada 30 minutos: descarga los precios oficiales, genera los datos y publica la web en GitHub Pages.
+# No necesita servidor ni base de datos. Coste: 0 €.
+name: Actualizar precios y publicar
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'   # dos veces por hora (GitHub puede retrasarlo unos minutos)
+  workflow_dispatch:          # botón "Run workflow" para lanzarlo a mano
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Si el Ministerio bloquea los servidores de GitHub, instala un "self-hosted runner" en un
+    # ordenador en España y crea la variable del repositorio DATA_RUNNER = self-hosted (ver README).
+    runs-on: ${{ vars.DATA_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Descargar precios y generar teselas
+        run: node scripts/build-data.mjs public/data
+        env:
+          # Web ya publicada: si una fuente falla, se reutilizan sus datos anteriores.
+          SITE_URL: ${{ vars.SITE_URL }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

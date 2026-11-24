@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Surtidor · Gasolineras baratas cerca de ti</title>
+  <meta name="description" content="Mapa con los precios oficiales de todas las gasolineras, actualizados cada 30 minutos. Encuentra la más barata cerca de ti y calcula si compensa el desvío.">
+  <meta name="theme-color" content="#1450a3">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="bar" class="bar" hidden></div>
+
+  <header class="topbar">
+    <form id="search" class="search" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+      <label class="sr" for="q">Buscar un lugar</label>
+      <input id="q" type="search" placeholder="Buscar ciudad, calle o código postal" autocomplete="off" enterkeyhint="search">
+    </form>
+    <button id="btn-settings" class="icon-btn" type="button" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </header>
+
+  <nav id="fuels" class="fuels" aria-label="Elige combustible"></nav>
+
+  <div id="map" role="application" aria-label="Mapa de gasolineras"></div>
+
+  <button id="btn-locate" class="fab" type="button" aria-label="Ir a mi ubicación">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+  </button>
+
+  <section id="sheet" class="sheet" aria-label="Lista de gasolineras">
+    <button id="sheet-handle" class="handle" type="button" aria-label="Mostrar u ocultar la lista" aria-expanded="false"><span></span></button>
+
+    <div id="listview" class="view">
+      <div class="sheet-head">
+        <h1 id="sheet-title">Gasolineras baratas</h1>
+        <p id="sheet-sub" class="muted">Cargando precios oficiales…</p>
+        <div class="tools">
+          <div class="seg" role="group" aria-label="Ordenar por">
+            <button type="button" data-sort="price">Precio</button>
+            <button type="button" data-sort="saving">Ahorro real</button>
+            <button type="button" data-sort="dist">Distancia</button>
+          </div>
+          <button id="btn-favs" class="ghost" type="button" aria-pressed="false">Favoritas</button>
+        </div>
+      </div>
+      <ol id="list" class="list"></ol>
+    </div>
+
+    <div id="detail" class="view detail" hidden></div>
+
+    <footer id="credits" class="credits"></footer>
+  </section>
+
+  <dialog id="settings" class="dialog" aria-labelledby="settings-title">
+    <form method="dialog" id="settings-form">
+      <h2 id="settings-title">Ajustes</h2>
+      <label>Litros que sueles echar
+        <input name="liters" type="number" inputmode="decimal" min="5" max="200" step="1" required>
+      </label>
+      <label>Consumo de tu coche (L/100 km)
+        <input name="consumption" type="number" inputmode="decimal" min="2" max="30" step="0.1" required>
+      </label>
+      <label>Buscar en un radio de
+        <select name="radius">
+          <option value="2">2 km</option><option value="5">5 km</option><option value="10">10 km</option>
+          <option value="20">20 km</option><option value="50">50 km</option>
+        </select>
+      </label>
+      <label class="check"><input name="hideRestricted" type="checkbox"> Ocultar gasolineras de venta restringida (solo socios)</label>
+      <p class="muted small">El “ahorro real” compara cada gasolinera con la más cercana y descuenta el combustible que gastas en el desvío (ida y vuelta).</p>
+      <div class="dialog-actions">
+        <button value="cancel" class="ghost" type="submit" formnovalidate>Cancelar</button>
+        <button value="save" class="primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
