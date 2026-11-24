@@ -38,4 +38,16 @@ assert.equal(madridToISO('15/07/2026 10:00:00'), '2026-07-15T08:00:00.000Z');
 
 assert.throws(() => parseES('<html>error</html>'), /XML/);
 
+// Coordenadas intercambiadas (se corrigen) y estaciones fuera de España (se descartan)
+const base = { 'Rótulo': 'PRUEBA', 'Precio Gasolina 95 E5': '1,500' };
+const fake = Array.from({ length: 1000 }, (_, i) => ({ ...base, IDEESS: String(i), Latitud: '40,4', 'Longitud (WGS84)': '-3,7' }));
+fake.push({ ...base, IDEESS: 'swap', Latitud: '-8,612', 'Longitud (WGS84)': '42,345' });
+fake.push({ ...base, IDEESS: 'fuera', Latitud: '48,857', 'Longitud (WGS84)': '2,352' });
+fake.push({ ...base, IDEESS: 'hierro', Latitud: '27,745', 'Longitud (WGS84)': '-18,021' });
+const parsedES = parseES(JSON.stringify({ Fecha: '24/11/2026 16:23:45', ListaEESSPrecio: fake }));
+const sw = parsedES.find((s) => s.id === 'swap');
+assert.deepEqual([sw.lat, sw.lon], [42.345, -8.612], 'latitud y longitud intercambiadas');
+assert.equal(parsedES.some((s) => s.id === 'fuera'), false, 'fuera de España');
+assert.ok(parsedES.some((s) => s.id === 'hierro'), 'Canarias (El Hierro) se mantiene');
+
 console.log('core: todas las pruebas OK');

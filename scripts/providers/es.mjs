@@ -38,6 +38,9 @@ const FUEL_FIELDS = {
 // Si una estación no tiene 98 E5 pero sí 98 E10, se usa como "Gasolina 98".
 const FALLBACKS = { g98: 'precio gasolina 98 e10' };
 
+// Zona de España con margen (península, Baleares, Canarias, Ceuta y Melilla).
+const inSpain = (lat, lon) => lat >= 27 && lat <= 44.5 && lon >= -19 && lon <= 5;
+
 export async function fetchStations({ fetchText }) {
   let lastErr;
   for (const url of ENDPOINTS) {
@@ -74,9 +77,15 @@ export function parse(text) {
     const r = {};
     for (const [k, v] of Object.entries(raw)) r[normKey(k)] = typeof v === 'string' ? v.trim() : v;
 
-    const lat = parseCoord(r.latitud);
-    const lon = parseCoord(r['longitud wgs84'] ?? firstStartingWith(r, 'longitud'));
+    let lat = parseCoord(r.latitud);
+    let lon = parseCoord(r['longitud wgs84'] ?? firstStartingWith(r, 'longitud'));
     if (!validLatLon(lat, lon)) continue;
+    // Algunas estaciones llegan con latitud y longitud intercambiadas: se corrigen.
+    // Las que siguen fuera de España se descartan (aparecerían en otro continente).
+    if (!inSpain(lat, lon)) {
+      if (!inSpain(lon, lat)) continue;
+      [lat, lon] = [lon, lat];
+    }
 
     const prices = {};
     for (const [field, code] of Object.entries(FUEL_FIELDS)) {
