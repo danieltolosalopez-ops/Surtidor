@@ -35,7 +35,7 @@ jobs:
         run: node scripts/build-data.mjs public/data
         env:
           # Web ya publicada: si una fuente falla, se reutilizan sus datos anteriores.
-          SITE_URL: ${{ vars.SITE_URL }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://danieltolosalopez-ops.github.io/Surtidor' }}
 
       - uses: actions/configure-pages@v5
 
