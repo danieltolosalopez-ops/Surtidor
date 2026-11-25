@@ -2,7 +2,7 @@
 // Uso: npm test && PW_PATH=/ruta/a/node_modules/ node test/visual.mjs  (requiere playwright y Chrome)
 // Hace capturas en test/screens y falla (código 1) si hay errores de JavaScript o algo no aparece.
 import { createRequire } from 'node:module';
-import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
 
@@ -92,6 +92,36 @@ await pg.goto(`http://localhost:5199/#FR/${frTile}/${frId}`);
 await pg.waitForTimeout(1000);
 const deepTitle = await pg.textContent('#detail h2').catch(() => null);
 
+// 5) La lista del radio incluye las gasolineras de las zonas vecinas aunque no se vean en pantalla
+//    (el este de Sevilla está junto al límite de zona del meridiano 6° O).
+const { distanceKm } = await import('../public/core.js');
+const allStations = [];
+for (const cc of ['ES', 'FR']) for (const f of await readdir(`test/out/${cc}`)) allStations.push(...JSON.parse(await readFile(`test/out/${cc}/${f}`, 'utf8')).stations);
+const [sevLat, sevLon] = [37.39, -5.94];
+pg = await page({ ...mobile, geolocation: { latitude: sevLat, longitude: sevLon }, permissions: ['geolocation'] });
+await pg.goto('http://localhost:5199/');
+await pg.waitForTimeout(1200);
+const radiusShown = Number((/(\d+) gasolineras/.exec(await pg.textContent('#sheet-sub')) || [])[1]);
+const radiusReal = allStations.filter((s) => s.p.g95 !== undefined && !s.r && distanceKm(sevLat, sevLon, s.a, s.o) <= 10).length;
+
+// 6) Con las favoritas abiertas, al llegar precios nuevos (recarga cada 10 min) siguen mostrando su precio
+const frFav = JSON.parse(await readFile(`test/out/FR/${frTile}.json`, 'utf8')).stations.find((s) => s.p.g95 !== undefined);
+pg = await page({ ...mobile, geolocation: { latitude: 40.4168, longitude: -3.7038 }, permissions: ['geolocation'] });
+await pg.addInitScript((k) => localStorage.setItem('surtidor:favorites', JSON.stringify([{ key: k, name: 'Favorita', place: 'Francia' }])), `FR/${frTile}/${frFav.i}`);
+let generation = 0;
+await pg.route('**/data/index.json*', async (r) => { const res = await r.fetch(); const j = await res.json(); j.generated = `prueba-${generation++}`; await r.fulfill({ response: res, json: j }); });
+await pg.clock.install();
+await pg.goto('http://localhost:5199/');
+await pg.clock.runFor(3000);
+await pg.click('#btn-favs');
+await pg.clock.runFor(2000);
+await pg.waitForTimeout(800);
+await pg.clock.runFor(10 * 60000 + 2000);
+await pg.waitForTimeout(800);
+await pg.clock.runFor(3000);
+await pg.waitForTimeout(800);
+const favAfterReload = await pg.textContent('#list');
+
 await browser.close();
 server.close();
 console.log('Favoritas:', favText.replace(/\s+/g, ' ').trim().slice(0, 120));
@@ -99,5 +129,9 @@ console.log('Enlace directo abre:', deepTitle);
 const problems = [...errors];
 if (!deepTitle) problems.push('El enlace directo a una gasolinera no abrió su ficha');
 if (!/€\/L/.test(favText)) problems.push('La lista de favoritas no muestra precio');
+console.log(`Radio 10 km en Sevilla: la app muestra ${radiusShown}, hay ${radiusReal}`);
+if (radiusShown !== radiusReal) problems.push('La lista del radio no incluye todas las gasolineras cercanas');
+if (generation < 2) problems.push('No se llegó a probar la recarga automática de precios');
+if (!/€\/L/.test(favAfterReload)) problems.push('Las favoritas pierden el precio tras la recarga automática');
 console.log(problems.length ? `PROBLEMAS:\n${problems.join('\n')}` : 'Prueba visual OK: sin errores de JavaScript');
 process.exit(problems.length ? 1 : 0);

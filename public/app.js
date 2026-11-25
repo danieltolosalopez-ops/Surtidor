@@ -115,6 +115,10 @@ async function refresh() {
   for (const country of state.index.countries) for (const k of keys) if (country.tiles[k]) needed.push([country.code, k]);
 
   if (map.getZoom() < (CFG.detailZoom || 9) || needed.length > 16) { renderOverview(b); return; }
+  // La lista "cerca de ti" abarca todo el radio elegido, aunque parte quede fuera de la pantalla.
+  const ref = refPoint(), dLat = state.settings.radius / 110, dLon = dLat / Math.max(0.2, Math.cos((ref.lat * Math.PI) / 180));
+  const around = tilesForBounds(ref.lat - dLat, ref.lon - dLon, ref.lat + dLat, ref.lon + dLon, state.index.tileDeg);
+  for (const country of state.index.countries) for (const k of around) if (!keys.includes(k) && country.tiles[k]) needed.push([country.code, k]);
   setLoading(true);
   try {
     const lists = await Promise.all(needed.map(([cc, k]) => getTile(cc, k).catch(() => [])));
@@ -159,6 +163,13 @@ function renderOverview(b) {
   if (state.view === 'list') renderList();
 }
 
+/** Punto desde el que se mide el radio: tu ubicación si está a la vista; si no, el centro del mapa. */
+function refPoint() {
+  const c = map.getCenter();
+  const useUser = state.user && map.getBounds().pad(0.5).contains([state.user.lat, state.user.lon]);
+  return useUser ? { lat: state.user.lat, lon: state.user.lon, kind: 'user' } : { lat: c.lat, lon: c.lng, kind: 'center' };
+}
+
 function pinIcon(price, color, best, sel) {
   const cls = `pin${best ? ' best' : ''}${sel ? ' sel' : ''}`;
   const html = `<div class="${cls}" style="--c:${color}">${best ? '<i>Más barata</i>' : ''}<b>${formatPrice(price)}</b></div>`;
@@ -171,9 +182,7 @@ function renderStations(all, b) {
   const withFuel = all.filter((st) => st.p[f] !== undefined && !(s.hideRestricted && st.r));
   const inView = withFuel.filter((st) => b.contains([st.a, st.o]));
 
-  const c = map.getCenter();
-  const useUser = state.user && map.getBounds().pad(0.5).contains([state.user.lat, state.user.lon]);
-  state.ref = useUser ? { lat: state.user.lat, lon: state.user.lon, kind: 'user' } : { lat: c.lat, lon: c.lng, kind: 'center' };
+  state.ref = refPoint();
 
   for (const st of withFuel) st.dist = distanceKm(state.ref.lat, state.ref.lon, st.a, st.o);
   const near = withFuel.filter((st) => st.dist <= s.radius);
@@ -479,13 +488,17 @@ document.querySelector('.seg').addEventListener('click', (e) => {
   refresh();
 });
 
+// Carga las teselas de las favoritas para mostrar su precio actual.
+function loadFavTiles() {
+  Promise.all(state.favorites.map((f) => { const k = splitKey(f.key); return getTile(k.cc, k.tile).catch(() => null); }))
+    .then(() => state.view === 'favs' && renderList());
+}
+
 $('#btn-favs').addEventListener('click', () => {
   state.view = state.view === 'favs' ? 'list' : 'favs';
   if (state.view === 'favs') {
     openSheet(true);
-    // carga las teselas de las favoritas para mostrar su precio actual
-    Promise.all(state.favorites.map((f) => { const k = splitKey(f.key); return getTile(k.cc, k.tile).catch(() => null); }))
-      .then(() => state.view === 'favs' && renderList());
+    loadFavTiles();
   }
   renderList();
 });
@@ -526,13 +539,17 @@ $('#settings').addEventListener('close', () => {
 map.on('moveend', refreshSoon);
 map.on('click', () => { if (matchMedia('(max-width: 899px)').matches) openSheet(false); });
 
-document.addEventListener('visibilitychange', async () => {
+// Al llegar precios nuevos se vacía la caché de teselas: las favoritas abiertas se vuelven a cargar.
+async function reloadData() {
+  try { await loadIndex(); refresh(); if (state.view === 'favs') loadFavTiles(); } catch { /* sin conexión */ }
+}
+document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || Date.now() - state.loadedAt < 10 * 60000) return;
-  try { await loadIndex(); refresh(); } catch { /* sin conexión */ }
+  reloadData();
 });
-setInterval(async () => {
+setInterval(() => {
   if (document.visibilityState !== 'visible') return;
-  try { await loadIndex(); refresh(); } catch { /* sin conexión */ }
+  reloadData();
 }, 10 * 60000);
 
 // ── Arranque ─────────────────────────────────────────────────────────────────
