@@ -1,6 +1,6 @@
 .DS_Store
-android/
-ios/
+/android/
+/ios/
 node_modules/
 public/data/
 public/vendor/
