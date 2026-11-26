@@ -7,6 +7,9 @@ name: App Android
 on:
   push:
     branches: [main]
+    paths-ignore:            # los cambios de textos (README, registro) o de la ficha no recompilan la app
+      - '**.md'
+      - 'store/**'
   workflow_dispatch:
 
 permissions:
