@@ -20,7 +20,9 @@ concurrency:
 
 jobs:
   ios:
-    runs-on: macos-26
+    # macos-26-intel: los Mac Apple Silicon de GitHub (macos-26) se quedan a menudo sin hueco libre
+    # («The job was not acquired by Runner»). Si algún día se retira, vuelve a poner macos-26.
+    runs-on: macos-26-intel
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
