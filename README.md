@@ -91,7 +91,7 @@ La app usa **Capacitor 8**, que apunta a **Android 16 (API 36)**: lo que Google 
 
 ### Firma (necesaria para Google Play)
 
-La firma está guardada en los *secrets* del repositorio (*Settings → Secrets and variables → Actions*):
+La firma va en los *secrets* del repositorio (*Settings → Secrets and variables → Actions → New repository secret*). Si aún no están, créalos con los datos de `firma-android-LEEME.txt` (el primero es todo el texto de `firma-base64.txt`) y vuelve a lanzar «App Android» desde la pestaña Actions:
 
 | Secret | Qué es |
 |---|---|
