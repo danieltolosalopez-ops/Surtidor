@@ -8,7 +8,9 @@ export default async ({ ir, js, captura, escribir, esperar }) => {
   await captura('01-mapa');
   await js("document.querySelector('#sheet-handle').click()"); await esperar(2000);
   await captura('02-lista');
-  await js("(document.querySelector('#list li button') || document.querySelector('#list li a') || document.querySelector('#list li')).click()");
+  const filas = await js("document.querySelectorAll('#list button.row').length");
+  if (!filas) throw new Error('La lista no tiene gasolineras: ' + await js("document.querySelector('#sheet-sub').textContent"));
+  await js("document.querySelector('#list button.row').click()");
   await esperar(2500);
   await captura('03-detalle');
   await js("document.querySelector('#btn-settings').click()"); await esperar(800);
