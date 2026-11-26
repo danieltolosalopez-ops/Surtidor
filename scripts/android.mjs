@@ -31,7 +31,10 @@ for (const [nombre, valor] of Object.entries(extra.metadatos || {})) {
     manifest = manifest.replace(/(<application[^>]*>)/, `$1\n        <meta-data android:name="${nombre}" android:value="${valor}" />`);
   }
 }
-for (const permiso of ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', ...(extra.permisos || [])]) {
+// Los permisos de avisos solo se piden si la app usa avisos (@capacitor/local-notifications).
+const usaAvisos = !!JSON.parse(readFileSync('package.json', 'utf8')).dependencies?.['@capacitor/local-notifications'];
+const avisos = usaAvisos ? ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED'] : [];
+for (const permiso of [...avisos, ...(extra.permisos || [])]) {
   if (!manifest.includes(permiso)) manifest = manifest.replace('</manifest>', `    <uses-permission android:name="${permiso}" />\n</manifest>`);
 }
 writeFileSync(manifestPath, manifest);
