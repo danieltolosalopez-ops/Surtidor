@@ -1,0 +1,12 @@
+{
+  "estiloBarra": "UIStatusBarStyleLightContent",
+  "permisos": {
+    "NSLocationWhenInUseUsageDescription": "Para mostrarte las gasolineras más baratas cerca de ti. Tu ubicación no sale del móvil.",
+    "NSUserTrackingUsageDescription": "Para mostrarte anuncios más relevantes. Puedes negarte y la app funcionará igual."
+  },
+  "plist": {
+    "GADApplicationIdentifier": "ca-app-pub-3940256099942544~1458002511",
+    "SKAdNetworkItems": [{ "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" }]
+  },
+  "_nota": "GADApplicationIdentifier es el id de PRUEBA de Google. Cámbialo por el tuyo de AdMob para iOS antes de publicar."
+}

@@ -1,0 +1,10 @@
+{
+  "permisos": [
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.ACCESS_FINE_LOCATION"
+  ],
+  "metadatos": {
+    "com.google.android.gms.ads.APPLICATION_ID": "ca-app-pub-3940256099942544~3347511713"
+  },
+  "_nota": "El id de AdMob de arriba es el de PRUEBA de Google. Cámbialo por el tuyo (el que lleva ~) al crear la cuenta de AdMob."
+}

@@ -1,0 +1,88 @@
+# Compila la app de iPhone en un Mac de GitHub (macOS 26 con Xcode 26, lo que exige App Store desde abril de 2026).
+# - Sin configurar nada: comprueba que la app compila (para el simulador). Así sabemos que está lista.
+# - Con los 4 secrets de Apple (ver README, apartado iPhone): la firma y la sube a App Store Connect (TestFlight).
+name: App iPhone
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar Capacitor
+        run: npm install --no-audit --no-fund
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Copiar la librería del mapa (Leaflet)
+        run: node scripts/vendor.mjs
+
+      - name: Preparar el proyecto de iPhone
+        run: node scripts/ios.mjs
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+
+      - name: ¿Hay cuenta de Apple configurada?
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcodebuild -version
+          if [ -n "$ASC_KEY_P8" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            echo "SUBIR=1" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin cuenta de Apple configurada: solo se comprueba que la app compila. Para subirla a App Store, sigue el README (apartado iPhone)."
+          fi
+
+      - name: Comprobar que compila (simulador)
+        if: env.SUBIR != '1'
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 40
+
+      - name: Firmar y subir a App Store Connect (TestFlight)
+        if: env.SUBIR == '1'
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+          AUTH="-allowProvisioningUpdates -authenticationKeyPath $RUNNER_TEMP/AuthKey.p8 -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic $AUTH archive | tail -n 40
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" $AUTH | tail -n 40
+          echo "Subida a App Store Connect: aparecerá en TestFlight en unos minutos."

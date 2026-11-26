@@ -1,7 +1,7 @@
 // sw.js — permite instalar la web como app (PWA) y abrirla aunque falle la conexión.
-const SHELL_CACHE = 'surtidor-shell-v2';
+const SHELL_CACHE = 'surtidor-shell-v3';
 const DATA_CACHE = 'surtidor-data';
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'core.js', 'config.js', 'icon.svg', 'manifest.webmanifest', 'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css'];
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'capacitor-init.js', 'core.js', 'config.js', 'icon.svg', 'manifest.webmanifest', 'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL_CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

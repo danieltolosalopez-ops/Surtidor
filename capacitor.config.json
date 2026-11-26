@@ -1,11 +1,15 @@
 {
-  "appId": "com.tunombre.surtidor",
+  "appId": "io.github.danieltolosalopezops.surtidor",
   "appName": "Surtidor",
   "webDir": "public",
   "server": {
     "androidScheme": "https"
   },
   "plugins": {
-    "AdMob": {}
+    "AdMob": {},
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DARK"
+    }
   }
 }

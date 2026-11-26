@@ -80,68 +80,83 @@ Es la forma más rápida de que la usen amigos y de conseguir los primeros usuar
 
 ---
 
-## 4. Publicar en Google Play
+## 4. Publicar en Google Play (sin Android Studio)
 
-### Ruta fácil (sin anuncios dentro de la app)
-1. Entra en **pwabuilder.com**, pega la dirección de tu web y pulsa *Package for stores → Android*.
-2. Descarga el paquete: incluye el archivo `.aab` y una **clave de firma**. Guarda la clave en un lugar seguro: sin ella no podrás actualizar la app nunca más.
-3. PWABuilder también te da un archivo `assetlinks.json`. Debe estar en `https://TU-DOMINIO/.well-known/assetlinks.json` para que la app se vea a pantalla completa (sin barra del navegador). En una dirección `github.io/surtidor` no se puede poner en la raíz, así que para esta ruta conviene un **dominio propio** (≈ 10 €/año) conectado a GitHub Pages (*Settings → Pages → Custom domain*).
-4. Sube el `.aab` a Google Play Console (ver «Cuenta de Google Play» abajo).
+Cada vez que se sube un cambio a `main`, GitHub compila la app solo (workflow **App Android**, pestaña *Actions*). Cuando termina (unos 8-10 minutos), en la pestaña **Releases** del repositorio aparece **«App Android (última versión)»** con:
 
-### Ruta completa (con anuncios AdMob) — necesita un ordenador con Android Studio
-```bash
-npm install
-npm run icons
-npx cap add android
-```
-Edita `android/app/src/main/AndroidManifest.xml` y añade antes de `<application>`:
-```xml
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-```
-y dentro de `<application>` (con TU id de aplicación de AdMob, el que lleva `~`):
-```xml
-<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID"
-           android:value="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"/>
-```
-Después:
-```bash
-npm run cap:sync      # copia la librería del mapa y prepara el proyecto Android
-npx cap open android
-```
-En Android Studio: *File → New → Image Asset* con `store/icon-1024.png` para los iconos, y *Build → Generate Signed App Bundle* para crear el `.aab`.
+- `Surtidor-prueba.apk` (o `Surtidor.apk` si hay firma): ábrelo desde el móvil para instalar la app y probarla. Android te pedirá permitir «instalar apps de origen desconocido» solo esa vez.
+- `Surtidor-google-play.aab`: el archivo que se sube a Google Play (solo aparece cuando la firma está configurada).
 
-### Cuenta de Google Play
-- Alta única de **25 $** y verificación de identidad.
-- Si la cuenta es **personal y nueva**, Google exige una **prueba cerrada con al menos 12 personas durante 14 días seguidos** antes de publicar. Busca 15–20 voluntarios (familia, amigos, grupos de conductores) para no quedarte corto.
-- En la ficha: icono `store/play-icon-512.png`, imagen destacada `store/play-feature-1024x500.png`, 2–8 capturas del móvil, y la **URL de privacidad**: `https://TU-USUARIO.github.io/surtidor/privacy.html` (rellena antes los [corchetes] de `privacy.html`).
-- Formulario de **seguridad de los datos**: la ubicación se usa solo en el dispositivo; si activas AdMob, declara «ID de dispositivo u otros identificadores» recogidos y compartidos con fines publicitarios.
-- Público objetivo: mayores de 18 años (evita requisitos extra de apps para familias).
+La app usa **Capacitor 8**, que apunta a **Android 16 (API 36)**: lo que Google Play exige desde el 31 de agosto de 2026 para apps nuevas.
+
+### Firma (necesaria para Google Play)
+
+La firma está guardada en los *secrets* del repositorio (*Settings → Secrets and variables → Actions*):
+
+| Secret | Qué es |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | el archivo de firma (`.jks`) en base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | contraseña del archivo |
+| `ANDROID_KEY_ALIAS` | nombre de la clave |
+| `ANDROID_KEY_PASSWORD` | contraseña de la clave |
+
+**Guarda una copia del archivo `.jks` y de sus contraseñas fuera de GitHub** (por ejemplo, en tu gestor de contraseñas). Es tu «clave de subida» a Google Play: si la pierdes, hay que pedir a Google que la cambie.
+
+Para crear una firma nueva: `keytool -genkeypair -v -keystore firma.jks -alias subida -keyalg RSA -keysize 2048 -validity 10000` y `base64 -w0 firma.jks` para el primer secret.
+
+### Publicar en Google Play
+
+1. Cuenta de desarrollador de Google Play (25 $, una sola vez; sirve para todas tus apps).
+2. *Crear aplicación* → nombre, idioma español, gratuita.
+3. **Prueba cerrada** con al menos **12 testers durante 14 días seguidos** (obligatorio en cuentas personales nuevas). Puedes usar el mismo grupo de testers para todas tus apps.
+4. Sube el `.aab` de *Releases*. Activa *Firma de apps de Google Play* (Google guarda la clave final; la tuya es solo la de subida).
+5. Ficha de la tienda: icono `store/play-icon-512.png`, imagen destacada `store/play-destacada-1024x500.png`, 2-8 capturas hechas con el móvil, y la política de privacidad: `https://danieltolosalopez-ops.github.io/Surtidor/privacy.html`.
+6. Formularios: *Seguridad de los datos* → «ID de dispositivo u otros identificadores» recogidos y compartidos con fines publicitarios (por AdMob); la ubicación se usa solo en el móvil y no se recoge. *Anuncios* → sí. *Clasificación de contenido* → cuestionario (apta para todos). *Público objetivo* → mayores de 18 (evita requisitos extra de apps para familias).
+7. Los textos de la ficha están en `store/FICHA.md`.
 
 ---
 
-## 5. Publicar en el App Store (iPhone)
+## 5. Publicar en el App Store (iPhone) sin Mac
 
-Requisitos: **99 $/año** (Apple Developer Program) y un **Mac con Xcode** (o un servicio de Mac en la nube).
-```bash
-npx cap add ios
-npm run cap:sync
-npx cap open ios
-```
-En `ios/App/App/Info.plist` añade:
-- `NSLocationWhenInUseUsageDescription` → «Para mostrarte las gasolineras más baratas cerca de ti.»
-- `GADApplicationIdentifier` → tu id de app de AdMob para iOS.
-- `NSUserTrackingUsageDescription` → «Para mostrarte anuncios más relevantes.»
-- `SKAdNetworkItems` → copia la lista de la guía de AdMob para iOS.
+El workflow **App iPhone** compila la app en un Mac de GitHub (macOS 26 con Xcode 26, lo que exige App Store desde abril de 2026):
 
-En Xcode: *Product → Archive → Distribute App*. Apple revisa que la app aporte algo más que una web metida en una caja; esta tiene ubicación, favoritos, cálculo de ahorro y mapa, pero conviene describir bien esas funciones en la ficha.
+- **Sin configurar nada:** en cada cambio comprueba que la app de iPhone compila.
+- **Con tu cuenta de Apple configurada:** la firma y la sube a App Store Connect. Aparece en **TestFlight** y desde ahí la envías a revisión.
+
+La app es solo para iPhone y en vertical, así que App Store no pide capturas de iPad.
+
+### Lo que hay que hacer una vez (vale para todas tus apps)
+
+1. Darte de alta en el **Apple Developer Program** (99 $/año) en developer.apple.com.
+2. **App Store Connect → Usuarios y acceso → Integraciones → App Store Connect API → Generar clave**, con acceso **Admin** (lo necesita Xcode para crear los certificados él solo). Descarga el archivo `.p8` (solo se puede descargar una vez) y apunta el **Key ID** y el **Issuer ID**.
+3. Tu **Team ID**: developer.apple.com → Account → Membership details.
+4. En este repositorio, *Settings → Secrets and variables → Actions*:
+
+| Secret | Qué es |
+|---|---|
+| `APPLE_TEAM_ID` | el Team ID |
+| `ASC_KEY_ID` | el Key ID de la clave |
+| `ASC_ISSUER_ID` | el Issuer ID |
+| `ASC_KEY_P8` | el contenido completo del archivo `.p8` (desde `-----BEGIN PRIVATE KEY-----` hasta el final) |
+
+5. **App Store Connect → Apps → «+» → Nueva app**: iOS, nombre, idioma español, Bundle ID `io.github.danieltolosalopezops.surtidor` y un SKU cualquiera (por ejemplo, `surtidor-ios`). Si el Bundle ID aún no aparece, lanza una vez el workflow *App iPhone*: Xcode lo registra solo.
+6. *Actions → App iPhone → Run workflow*. En unos 15-20 minutos la versión aparece en TestFlight. Rellena la ficha con los textos de `store/FICHA.md`, añade las capturas de `store/capturas/iphone-6.9/` y `store/capturas/iphone-6.3/` y envía a revisión.
+
+## Ficha de las tiendas
+
+`store/FICHA.md` tiene todos los textos para Google Play y App Store (nombre, descripciones, palabras clave, categoría, URLs, respuestas de privacidad y notas para la revisión), ya ajustados a los límites de caracteres. Las capturas están en `store/capturas/` a los tamaños que piden las tiendas. Para rehacerlas: `bash test/capturas.sh public test/capturas.pasos.mjs store`.
+
+### Antes de publicar en las tiendas (Surtidor)
+
+- **AdMob:** los identificadores que trae son los de **prueba** de Google (enseñan anuncios de prueba). Cuando tengas cuenta de AdMob, pon tu id de aplicación (el que lleva `~`) en `marca/android.json` y `marca/ios.json`, y los ids de bloque en `public/config.js` con `testing: false` (apartado 6).
+- **Mapa:** para una app en las tiendas hace falta un proveedor de mapas propio, porque los servidores de OpenStreetMap no admiten apps con muchos usuarios. Crea una clave gratuita en maptiler.com y ponla en `public/config.js` (apartado 7).
 
 ---
 
 ## 6. Anuncios (AdMob)
 
 1. Crea cuenta en **admob.google.com**, añade la app (Android e iOS por separado) y crea un bloque **Banner**.
-2. Copia los ids de bloque en `public/config.js` → `ads.android.banner` / `ads.ios.banner`, y el id de aplicación en los archivos nativos (apartados 4 y 5).
+2. Copia los ids de bloque en `public/config.js` → `ads.android.banner` / `ads.ios.banner`, y el id de aplicación (el que lleva `~`) en `marca/android.json` (Android) y en `GADApplicationIdentifier` de `marca/ios.json` (iPhone). GitHub los mete solos en la app al compilarla.
 3. En AdMob → **Privacidad y mensajes**, crea el mensaje de **RGPD** (obligatorio en la UE). La app lo muestra sola.
 4. Mientras pruebas, deja `testing: true` (anuncios de prueba). **Nunca pulses tus propios anuncios reales**: Google suspende cuentas por eso. Al publicar, pon `testing: false`.
 

@@ -1,0 +1,36 @@
+# Hace las capturas para Google Play y App Store con un móvil simulado (Chrome) y las guarda en store/capturas.
+# Tamaños: Android 1080x2160, iPhone 6,9" 1320x2868 e iPhone 6,3" 1206x2622. Se lanza a mano desde Actions.
+name: Capturas de las tiendas
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capturas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Herramientas
+        run: python3 -m pip install --quiet pillow
+
+      - name: Copiar la librería del mapa (Leaflet)
+        run: node scripts/vendor.mjs
+
+      - name: Hacer las capturas
+        run: bash test/capturas.sh public test/capturas.pasos.mjs store
+
+      - name: Guardar las capturas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add store/capturas
+          if git diff --cached --quiet; then echo "Sin cambios"; else git commit -m "Capturas de las tiendas actualizadas" && git push; fi

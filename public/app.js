@@ -1,4 +1,5 @@
 // app.js — mapa de gasolineras con precios oficiales.
+import './capacitor-init.js';
 import {
   FUELS, tilesForBounds, distanceKm, priceScale, netSaving, quantile,
   formatPrice, formatMoney, formatKm, timeAgo, esc,
@@ -417,7 +418,7 @@ function drawUser() {
 
 function locate(auto = false) {
   // En la app móvil se usa el plugin nativo si está instalado (evita el doble aviso de permiso en iPhone).
-  const nativeGeo = isNative ? window.Capacitor.Plugins?.Geolocation : null;
+  const nativeGeo = isNative ? (window.Capacitor.Plugins?.Geolocation || window.Capacitor.registerPlugin?.('Geolocation')) : null;
   if (!nativeGeo && !navigator.geolocation) { if (!auto) toast('Este dispositivo no permite obtener la ubicación.'); return; }
   const btn = $('#btn-locate');
   btn.classList.add('busy');
